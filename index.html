@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies app</title>
+    <link rel="stylesheet" href="./src/output.css">
+    <script defer src="./public/bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+</head>
+
+<body class="h-screen w-screen bg-[#0D0D0D] grid grid-cols-10 grid-rows-14 overflow-x-hidden">
+    <header class="bg-[#0D0D0D] col-span-10 row-span-2 flex items-center justify-between border-white/5 border px-4">
+
+        <div class="flex items-center gap-4">
+            <h1 class="font-bold text-6xl text-[#E50914] cursor-default select-none">
+                Ñetflix
+            </h1>
+
+            <svg class="mt-2 w-16 h-16 text-[#E50914]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                fill="currentColor">
+                <path
+                    d="M7 2a2 2 0 0 0-2 2v1H4a1 1 0 0 0-.99 1.14l2 14A2 2 0 0 0 7 22h10a2 2 0 0 0 1.99-1.86l2-14A1 1 0 0 0 20 5h-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-4 0H9a2 2 0 0 0-2-2Zm2 3h6v1H9V5Zm-2 3h12l-1.71 12H6.71L5 8Z" />
+            </svg>
+        </div>
+
+        <!-- FILTRO: CATEGORÍA -->
+        <div id="categories" x-data="{ open:false, selected:'Categoría' }" class="relative">
+            <button title="categories" @click="open = !open"
+                class="bg-[#1a1a1a] cursor-pointer text-white px-4 py-2 rounded-lg border border-white/10 w-40 flex justify-between items-center">
+                <span x-text="selected"></span>
+                <svg width="16" height="16" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
+            </button>
+
+            <ul x-show="open" @click.outside="open=false"
+                class="absolute mt-2 bg-[#0f0f0f] border border-white/10 rounded-lg w-full shadow-lg z-50 overflow-hidden">
+
+                <li class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white"
+                    @click="selected='Películas'; open=false; setCategory('movie'); applyFilters()">Películas</li>
+                <li class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white"
+                    @click="selected='Series'; open=false; setCategory('tv'); applyFilters()">Series</li>
+                <li class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white"
+                    @click="selected='Anime'; open=false; setCategory('anime'); applyFilters()">Anime</li>
+                <li class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white"
+                    @click="selected='Animados'; open=false; setCategory('animated'); applyFilters()">Animados</li>
+                <li class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white"
+                    @click="selected='Realitys'; open=false; setCategory('reality'); applyFilters()">
+                    Realitys
+                </li>
+
+
+            </ul>
+        </div>
+
+
+        <!-- FILTRO: GÉNERO -->
+        <div x-data="genreDropdown()" class="relative genre-dropdown">
+            <button title="genre" @click="open = !open"
+                class="bg-[#1a1a1a] cursor-pointer text-white px-4 py-2 rounded-lg border border-white/10 w-40 flex justify-between items-center">
+                <span x-text="selected"></span>
+                <svg width="16" height="16" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
+            </button>
+
+            <ul x-show="open" @click.outside="open=false"
+                class="absolute mt-2 bg-[#0f0f0f] border border-white/10 rounded-lg w-full shadow-lg z-50 overflow-hidden">
+
+                <template x-for="genre in genres" :key="genre.id">
+                    <li @click="selectGenre(genre)" class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white"
+                        x-text="genre.name"></li>
+                </template>
+
+            </ul>
+        </div>
+
+
+        <!-- FILTRO: PAÍS -->
+        <div x-data="countryDropdown()" class="relative country-dropdown">
+            <button title="country" @click="open = !open"
+                class="bg-[#1a1a1a] cursor-pointer text-white px-4 py-2 rounded-lg border border-white/10 w-40 flex justify-between items-center">
+                <span class="flex items-center gap-2">
+                    <img alt="country" x-show="selectedFlag" :src="selectedFlag" class="w-5 h-5 rounded-sm" />
+                    <span x-text="selected"></span>
+                </span>
+                <svg width="16" height="16" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
+            </button>
+
+            <ul x-show="open" @click.outside="open=false"
+                class="absolute mt-2 bg-[#0f0f0f] border border-white/10 rounded-lg w-full shadow-lg z-50 overflow-hidden">
+
+                <template x-for="country in countries" :key="country.iso_3166_1">
+                    <li @click="selectCountry(country)"
+                        class="px-4 py-2 hover:bg-[#1a1a1a] cursor-pointer text-white flex items-center gap-3">
+
+                        <img :src="country.flag" class="w-5 h-5 rounded-sm" />
+                        <span x-text="country.english_name"></span>
+                    </li>
+                </template>
+
+            </ul>
+        </div>
+
+        <!-- FILTRO: FECHA -->
+        <div class="relative">
+            <input id="yearInput" type="number" placeholder="Año"
+                class="w-28 bg-[#1a1a1a] border border-white/10 text-white px-3 py-2 rounded-lg" />
+        </div>
+
+
+        <div class="relative flex items-center w-72">
+            <input id="searchInput" type="text" placeholder="Buscar películas, series, actores..." class="w-full bg-white/5 border border-white/10 text-white placeholder-white/40
+                   px-4 py-2 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50
+                   transition-all duration-200" />
+            <div id="searchSuggestions"
+                class="absolute top-full left-0 w-full bg-[#0f0f0f] border border-white/10 rounded-lg mt-2 hidden z-50 max-h-80 overflow-y-auto">
+            </div>
+
+            <svg id="searchIcon" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 cursor-pointer
+                   transition-all duration-200 hover:text-red-400" xmlns="http://www.w3.org/2000/svg" width="20"
+                height="20" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="m15.442 20l1 1H5V3h9.539L19 8.346v12.27h-.092L13.73 15.45q-.425.294-.839.422Q12.48 16 12 16q-1.246 0-2.123-.877T9 13t.877-2.123T12 10t2.123.877T15 13q0 .517-.137.93t-.413.8l3.55 3.6V8.7L14.05 4H6v16zm-2.03-5.587Q14 13.825 14 13t-.587-1.412T12 11t-1.412.588T10 13t.588 1.413T12 15t1.413-.587M12 12" />
+            </svg>
+        </div>
+
+    </header>
+
+    <main class="col-span-10 row-span-12 grid grid-rows-12 grid-cols-10">
+        <div id="recommendedPanel"
+            class="row-span-12 col-span-2 bg-[#0b0b0f] border-r border-white/5 flex flex-col overflow-hidden">
+
+            <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+                <h2 class="text-sm cursor-default font-semibold tracking-wide text-white/80 uppercase">
+                    Recomendadas
+                </h2>
+                <span class="text-[11px] text-white/40 cursor-default">Rating alto</span>
+            </div>
+
+            <div id="recommendedList" class="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+            </div>
+
+            <div class="px-4 py-3 border-t border-white/5 flex items-center justify-between text-xs text-white/60">
+                <button id="prevRecommended"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer">
+                    Anterior
+                </button>
+
+                <span class="cursor-default" id="recommendedPageLabel">Página 1</span>
+
+                <button id="nextRecommended"
+                    class="cursor-pointer px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition">
+                    Siguiente
+                </button>
+            </div>
+
+        </div>
+
+        <div id="moviesPanel" class="row-span-12 col-span-8 overflow-y-auto p-4 relative z-0">
+            <div id="moviesWrapper" class="grid grid-cols-5 gap-2"></div>
+        </div>
+
+    </main>
+    <!-- OVERLAY -->
+    <div id="offField" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center
+  opacity-0 pointer-events-none transition-all duration-300 z-50">
+
+        <!-- PANEL -->
+        <div id="moviePanelContent" class="relative bg-[#0f0f0f] w-230 h-[85vh] rounded-2xl shadow-2xl
+        shadow-black/60 p-6 flex gap-6 overflow-hidden scale-95 transition-all duration-300">
+
+            <!-- BACKDROP -->
+            <div id="panelBackdrop" class="absolute inset-0 bg-cover bg-center opacity-20 blur-2xl scale-110">
+            </div>
+
+            <!-- CLOSE -->
+            <button id="closePanel"
+                class="absolute top-4 right-4 text-gray-300 hover:text-white z-50 hover:scale-110 cursor-pointer hover:bg-red-700 hover:p-0.5 rounded-full ease-in-out transition-all duration-200 w-8 h-8">
+                ✕
+            </button>
+
+            <!-- LEFT -->
+            <div class="flex flex-col w-[55%] h-full gap-4 relative z-10 min-h-0">
+
+                <!-- TOP INFO -->
+                <div class="flex gap-4 cursor-default">
+
+                    <img title="img" id="panelPoster" class="w-52 h-78 object-cover rounded-xl shadow-lg"
+                        src="./img/1.png" />
+
+                    <div class="flex flex-col justify-between">
+
+                        <div>
+                            <h2 id="panelTitle" class="text-white text-2xl font-bold"></h2>
+                            <p id="panelGenre" class="text-red-400 text-sm mt-1"></p>
+                        </div>
+
+                        <div class="flex gap-2 text-xs text-gray-300">
+                            <span id="panelAdult" class="px-2 py-1 bg-white/10 rounded"></span>
+                            <span id="panelRating" class="px-2 py-1 bg-white/10 rounded"></span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- OVERVIEW WRAPPER -->
+                <div class="relative flex-1 min-h-0 overflow-hidden cursor-default">
+
+                    <p id="panelOverview" class="text-gray-300 text-sm leading-relaxed mt-2
+                    max-h-full overflow-y-auto pr-2 custom-scroll">
+                    </p>
+
+                    <!-- FADE EFFECT -->
+                    <div class="absolute bottom-0 left-0 w-full h-10
+                    bg-linear-to-t from-[#0f0f0f] to-transparent pointer-events-none">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT (TRAILER) -->
+            <div class="w-[45%] h-full sticky top-0 rounded-xl overflow-hidden shadow-lg z-10">
+
+                <iframe title="trailer" id="panelTrailer" class="w-full h-full" src="" allowfullscreen
+                    allow="autoplay; encrypted-media">
+                </iframe>
+
+            </div>
+
+        </div>
+    </div>
+</body>
+
+</html>
